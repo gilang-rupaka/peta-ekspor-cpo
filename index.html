@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Peta Regulasi Ekspor CPO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: satu rute vertikal kebun ke pelabuhan tujuan, tiap simpul berisi kartu regulasi berwarna per instansi, lalu matriks instansi x tahap */
+:root{
+  --bg:#f5f6f3; --surface:#ffffff; --fg:#1d2420; --muted:#5c6660; --line:#d6dbd5; --route:#9aa59d;
+  --accent:#7a4a12;
+  --dag:#b5541c;  /* Kemendag */
+  --keu:#1f5fa8;  /* Kemenkeu / DJBC */
+  --hub:#2d7d4e;  /* Kemenhub */
+  --tan:#8a6d00;  /* Kementan */
+  --pres:#6b3fa0; /* Presiden / PP lintas */
+  --stat:#4a5560; /* BPS / OSS */
+  --flag-bg:#fff4e2; --flag-fg:#6e3d00;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141917; --surface:#1c2320; --fg:#e7ece8; --muted:#a3ada6; --line:#2f3934; --route:#56625b;
+  --accent:#e0a35a; --dag:#ef8a52; --keu:#6fa8ec; --hub:#62c18a; --tan:#d8b83c; --pres:#b48ce6; --stat:#a5b0ba;
+  --flag-bg:#3a2a12; --flag-fg:#f3cf9b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141917; --surface:#1c2320; --fg:#e7ece8; --muted:#a3ada6; --line:#2f3934; --route:#56625b;
+  --accent:#e0a35a; --dag:#ef8a52; --keu:#6fa8ec; --hub:#62c18a; --tan:#d8b83c; --pres:#b48ce6; --stat:#a5b0ba;
+  --flag-bg:#3a2a12; --flag-fg:#f3cf9b; color-scheme:dark}
+*{box-sizing:border-box}
+html{color-scheme:light}
+body{margin:0;font-size:14px}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1040px;margin:0 auto;padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header{display:grid;gap:10px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(28px,5vw,44px);line-height:1.05;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:22px;margin:0;text-wrap:balance}
+.lede{max-width:68ch;color:var(--muted);margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.legend span.lbl{font-size:13px;color:var(--muted);margin-right:4px}
+.chip{--c:var(--stat);display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);color:var(--c);background:color-mix(in srgb,var(--c) 9%,var(--surface));white-space:nowrap}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+button.chip{cursor:pointer;font-family:inherit}
+button.chip[aria-pressed="false"]{opacity:.38}
+button.chip:focus-visible,button.reset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.reset{font:inherit;font-size:12.5px;background:none;border:0;color:var(--accent);text-decoration:underline;cursor:pointer;padding:4px}
+.c-dag{--c:var(--dag)} .c-keu{--c:var(--keu)} .c-hub{--c:var(--hub)} .c-tan{--c:var(--tan)} .c-pres{--c:var(--pres)} .c-stat{--c:var(--stat)}
+
+.route{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.stage{display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;position:relative}
+.rail{position:relative;display:flex;justify-content:center}
+.rail::before{content:"";position:absolute;top:0;bottom:0;width:3px;background:repeating-linear-gradient(var(--route) 0 10px,transparent 10px 16px)}
+.stage:first-child .rail::before{top:22px}
+.stage:last-child .rail::before{bottom:calc(100% - 22px)}
+.node{position:relative;z-index:1;width:44px;height:44px;border-radius:50%;background:var(--surface);border:2px solid var(--fg);display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:17px}
+.body{padding-bottom:30px;display:grid;gap:12px;min-width:0}
+.st-head{display:grid;gap:4px;padding-top:6px}
+.st-head .where{font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.03em}
+.st-head h3{font-family:var(--f-display);font-weight:700;font-size:19px;margin:0}
+.st-head p{margin:0;max-width:70ch;color:var(--muted)}
+.regs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.reg{--c:var(--stat);background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:6px;padding:12px 14px;display:grid;gap:6px;align-content:start;min-width:0;transition:opacity .2s}
+.reg.dim{opacity:.18}
+.reg .no{font-family:var(--f-mono);font-size:13px;font-weight:500;color:var(--c)}
+.reg .ttl{font-weight:600;font-size:14px;line-height:1.35}
+.reg ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--fg)}
+.reg li+li{margin-top:2px}
+.reg .who{font-size:12px;color:var(--muted)}
+.reg .new{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-left:6px}
+.flag{background:var(--flag-bg);color:var(--flag-fg);border-radius:6px;padding:10px 14px;font-size:13.5px;max-width:78ch}
+.flag b{font-family:var(--f-mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+
+.matrix-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13px}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:center}
+th{font-weight:600;font-size:12px;color:var(--muted);vertical-align:bottom}
+th.inst,td.inst{text-align:left;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--c)}
+.sec{display:grid;gap:12px}
+.note{font-size:13px;color:var(--muted);max-width:78ch;margin:0}
+.src{font-size:13px;columns:2 300px;column-gap:28px;margin:0;padding-left:18px}
+.src li{break-inside:avoid;margin-bottom:4px}
+.src a{color:var(--accent)}
+.status{font-size:13.5px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:6px;padding:10px 14px}
+.status:empty{display:none}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.lembar{display:grid;gap:16px}
+fieldset{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:16px;margin:0;display:grid;gap:14px;min-width:0}
+legend{font-family:var(--f-display);font-weight:700;font-size:15px;padding:0 6px}
+.grid4{display:grid;grid-template-columns:120px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px}
+label{display:grid;gap:5px;font-size:13px;font-weight:600;color:var(--fg)}
+input,textarea{font:inherit;font-weight:400;font-size:14.5px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px 10px;width:100%;min-width:0}
+input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--dag)}
+textarea{resize:vertical;line-height:1.5}
+fieldset:disabled{opacity:.55}
+.lock{margin:0;font-size:13px;color:var(--muted)}
+fieldset:not(:disabled) .lock{display:none}
+.q{grid-template-columns:28px minmax(0,1fr);column-gap:10px;font-weight:500;font-size:14px;line-height:1.45}
+.q textarea{grid-column:2}
+.qn{font-family:var(--f-display);font-weight:800;font-size:15px;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--fg);display:grid;place-items:center}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.btn{font:inherit;font-weight:600;font-size:14px;background:var(--fg);color:var(--bg);border:0;border-radius:5px;padding:9px 18px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.msg{font-size:13px;color:var(--muted)}
+.msg.ok{color:var(--hub)} .msg.err{color:var(--dag)}
+.rk-bar{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+table.rk{min-width:960px}
+table.rk td{vertical-align:top;text-align:left;font-size:12.5px}
+table.rk td.ans{min-width:220px;max-width:320px;white-space:pre-wrap}
+table.rk td.num{text-align:center;font-variant-numeric:tabular-nums}
+table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
+@media (max-width:720px){.grid4{grid-template-columns:110px minmax(0,1fr)}.grid4 .wide{grid-column:span 1}}
+@media (max-width:420px){.grid4{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.stage{grid-template-columns:40px minmax(0,1fr);gap:10px}.node{width:34px;height:34px;font-size:14px}.stage:first-child .rail::before{top:17px}.regs{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.reg{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Transportasi Multimoda · D3 Manajemen Logistik · Poltrada Bali</div>
+    <h1>Peta Regulasi Ekspor CPO</h1>
+    <p class="lede">Satu kiriman minyak sawit mentah (HS 1511.10) bergerak dari kebun di Sumatra sampai pelabuhan tujuan di luar negeri. Peta ini menandai instansi dan peraturan yang mengatur tiap tahap. Kotak oranye menandai titik irisan kewenangan antarinstansi.</p>
+    <div class="meta"><span>Status regulasi per <b>2 November 2026</b></span><span>Skema ekspor: <b>satu pintu lewat BUMN Ekspor</b></span><span>Masa transisi sampai <b>31 Desember 2026</b></span></div>
+  </header>
+
+  <section class="sec" aria-label="Filter instansi">
+    <div class="legend" id="legend"><span class="lbl">Tampilkan instansi:</span></div>
+  </section>
+
+  <ol class="route" id="route"></ol>
+
+  <section class="sec">
+    <h2>Matriks instansi per tahap</h2>
+    <p class="note">Titik berwarna menandai instansi yang menerbitkan aturan pada tahap tersebut. Kolom dengan tiga titik atau lebih menjadi titik rawan tumpang tindih.</p>
+    <div class="matrix-wrap"><table id="matrix"></table></div>
+  </section>
+
+  <section class="sec" id="diskusi">
+    <h2>Lembar jawaban diskusi</h2>
+    <p class="note">Isi identitas lebih dulu. Kolom pertanyaan terbuka setelah keempat kolom identitas terisi. Untuk memperbaiki jawaban, kirim ulang dengan Notar yang sama. Kiriman terakhir yang tersimpan.</p>
+    <div class="status" id="f-status" role="status"></div>
+    <form id="lembar" class="lembar" novalidate>
+      <div class="hp" aria-hidden="true"><label for="i-web">Jangan diisi<input id="i-web" name="website" tabindex="-1" autocomplete="off"></label></div>
+      <fieldset class="ident">
+        <legend>Identitas taruna</legend>
+        <div class="grid4">
+          <label for="i-absen">Nomor Absen<input id="i-absen" name="absen" inputmode="numeric" pattern="[0-9]{1,3}" maxlength="3" required autocomplete="off"></label>
+          <label for="i-nama" class="wide">Nama Lengkap<input id="i-nama" name="nama" maxlength="80" required autocomplete="name"></label>
+          <label for="i-notar">Notar<input id="i-notar" name="notar" inputmode="numeric" maxlength="20" required autocomplete="off"></label>
+          <label for="i-kelas">Kelas<input id="i-kelas" name="kelas" maxlength="20" required placeholder="contoh: ML 2A" autocomplete="off"></label>
+        </div>
+      </fieldset>
+      <fieldset class="qs" id="qs" disabled>
+        <legend>Pertanyaan</legend>
+        <p class="lock" id="lock-note">Lengkapi identitas untuk membuka pertanyaan.</p>
+        <label for="q1" class="q"><span class="qn">1</span><span>Tahap 4 menjadi tempat bertemu Kemenhub, Kemendag, dan BUMN Ekspor. Siapa yang menerbitkan dokumen angkutan multimoda bila DSI memegang kontrak ekspor?</span><textarea id="q1" name="q1" rows="5" required></textarea></label>
+        <label for="q2" class="q"><span class="qn">2</span><span>Freight forwarder dengan KBLI 52311 mengatur truk, gudang, dan kapal sekaligus. Apakah kegiatan ini sudah masuk ranah KBLI 52291 angkutan multimoda?</span><textarea id="q2" name="q2" rows="5" required></textarea></label>
+        <label for="q3" class="q"><span class="qn">3</span><span>Persetujuan Ekspor berlaku untuk satu PEB. Berapa dokumen yang harus siap sebelum kapal sandar di Dumai? Sebutkan dokumen dan penerbitnya.</span><textarea id="q3" name="q3" rows="5" required></textarea></label>
+        <div class="actions"><button type="submit" id="kirim" class="btn">Kirim jawaban</button><span id="f-msg" class="msg" role="status"></span></div>
+      </fieldset>
+    </form>
+  </section>
+
+  <section class="sec">
+    <h2>Sumber</h2>
+    <ol class="src" id="sources"></ol>
+    <p class="note">Peta ini merangkum regulasi untuk bahan ajar. Periksa naskah resmi di JDIH masing-masing instansi sebelum mengutipnya. Aturan angkutan jalan merujuk PM 60/2019 dan PM 18/2021 karena belum ditemukan pengganti per tanggal di atas.</p>
+  </section>
+</div>
+
+<script>
+const INST = {
+  pres:{n:"Presiden (PP/Perpres)"},
+  dag:{n:"Kemendag"},
+  keu:{n:"Kemenkeu dan DJBC"},
+  hub:{n:"Kemenhub"},
+  tan:{n:"Kementan"},
+  stat:{n:"BPS dan OSS"}
+};
+
+const STAGES = [
+ {where:"Kebun dan pabrik kelapa sawit", t:"Sertifikasi dan izin usaha",
+  d:"Kebun, pabrik, dan eksportir menyiapkan legalitas sebelum barang bergerak.",
+  regs:[
+   {i:"pres",no:"Perpres 16/2025",ttl:"Sistem Sertifikasi Kelapa Sawit Berkelanjutan Indonesia (ISPO)",pt:["Berlaku 19 Maret 2025, mengganti Perpres 44/2020","Wajib ISPO untuk kebun, industri hilir, dan bioenergi sawit"]},
+   {i:"tan",no:"Permentan 33/2025",ttl:"Sertifikasi ISPO terhadap usaha perkebunan kelapa sawit",pt:["Aturan teknis ISPO di tingkat kebun","Terbit November 2025"]},
+   {i:"stat",no:"PP 28/2025",ttl:"Penyelenggaraan Perizinan Berusaha Berbasis Risiko",pt:["Semua izin usaha terbit lewat OSS","Dasar sertifikat standar BUAM dan JPT"]},
+   {i:"stat",no:"KBLI 2025",ttl:"Klasifikasi baku lapangan usaha",pt:["52291 khusus angkutan multimoda","52311 untuk jasa pengurusan transportasi (JPT)"]}
+  ],
+  flag:"KBLI 2025 memisahkan angkutan multimoda dan JPT. ALFI meminta harmonisasi karena OSS berpotensi membaca kegiatan lintas moda sebagai hak eksklusif pemegang KBLI 52291."},
+ {where:"Jalan kebun ke tangki timbun pelabuhan", t:"Angkutan darat dengan truk tangki",
+  d:"CPO bergerak dari pabrik ke tangki timbun di pelabuhan muat dengan truk tangki.",
+  regs:[
+   {i:"hub",no:"UU 22/2009 jo UU 6/2023",ttl:"Lalu Lintas dan Angkutan Jalan",pt:["Pasal 169 mewajibkan kepatuhan daya angkut dan dimensi","Sanksi pidana pengemudi di Pasal 307"]},
+   {i:"hub",no:"PM 60/2019",ttl:"Penyelenggaraan angkutan barang dengan kendaraan bermotor di jalan",pt:["Persyaratan perusahaan angkutan barang","Kebijakan zero ODOL ditegakkan bertahap sejak 2026"]},
+   {i:"hub",no:"PM 18/2021",ttl:"Pengawasan muatan angkutan barang dan penimbangan kendaraan",pt:["Pengawasan di 89 UPPKB","Muatan lebih dari 5 persen ditilang dan dilarang melanjutkan perjalanan"]}
+  ]},
+ {where:"Kantor eksportir dan BUMN Ekspor", t:"Hak ekspor dan Persetujuan Ekspor",
+  d:"Pemilik CPO tidak lagi mengekspor langsung. BUMN Ekspor memegang kontrak, harga jual, dan Persetujuan Ekspor.",
+  regs:[
+   {i:"pres",no:"PP 24/2026",ttl:"Tata Kelola Ekspor Komoditas Sumber Daya Alam Strategis",pt:["Berlaku 1 Juni 2026","Ekspor sawit hanya lewat BUMN Ekspor, yaitu PT Danantara Sumberdaya Indonesia (DSI)","BUMN Ekspor menentukan harga jual dan margin","Transisi paling lambat 31 Desember 2026"],nw:true},
+   {i:"dag",no:"Permendag 16/2026",ttl:"Kebijakan dan Pengaturan Ekspor Komoditas SDA Strategis Kelapa Sawit",pt:["Mencabut Permendag 26/2024","Hak Ekspor dari DMO Minyakita yang dilaporkan di SIMIRAH","Persetujuan Ekspor berlaku untuk satu PEB dan enam bulan","Laporan realisasi ekspor tiap bulan paling lambat tanggal 15"],nw:true},
+   {i:"dag",no:"Kepmendag harga referensi",ttl:"Harga referensi CPO bulanan",pt:["Dasar hitung bea keluar dan pungutan ekspor","Juni 2026: USD 1.029,51 per MT"]},
+   {i:"keu",no:"Konfirmasi status wajib pajak",ttl:"Syarat terbit Persetujuan Ekspor",pt:["Status wajib pajak eksportir harus valid","Dicek sebelum Persetujuan Ekspor terbit"]}
+  ]},
+ {where:"Freight forwarder atau BUAM", t:"Pengurusan pengiriman dan pemesanan kapal",
+  d:"Pihak pengurus memesan ruang kapal, mengatur truk dan tangki, menerbitkan dokumen angkutan, dan mengasuransikan muatan.",
+  regs:[
+   {i:"hub",no:"PM 59/2021 jo PM 3/2026",ttl:"Penyelenggaraan usaha jasa terkait angkutan di perairan",pt:["Mengatur JPT (freight forwarder) dan perusahaan bongkar muat","JPT menerbitkan house B/L dan house AWB","PM 3/2026 berlaku 11 Maret 2026 dan menambah sertifikasi TKBM"],nw:true},
+   {i:"hub",no:"PP 8/2011",ttl:"Angkutan Multimoda",pt:["Satu kontrak dan satu dokumen untuk minimal dua moda","Penyelenggara wajib berbentuk BUAM"]},
+   {i:"hub",no:"PM 8/2012 jo PM 4/2026",ttl:"Penyelenggaraan dan Pengusahaan Angkutan Multimoda",pt:["Izin usaha menjadi sertifikat standar lewat OSS","Pembina: Ditjen Integrasi Transportasi dan Multimoda","Modal minimal setara 80.000 SDR","Sertifikat kompetensi SDM berlaku lima tahun"],nw:true},
+   {i:"dag",no:"Permendag 40/2020 jo 65/2020",ttl:"Penggunaan angkutan laut nasional dan asuransi nasional untuk ekspor barang tertentu",pt:["Mencakup ekspor CPO","Eksportir wajib mencantumkan nilai cost dan freight di PEB"]}
+  ],
+  flag:"Tiga instansi bertemu di tahap ini. Kemenhub mengatur siapa yang boleh mengurus kiriman. Kemendag mengatur kapal dan asuransi yang dipakai. PP 24/2026 menempatkan kontrak, pengangkutan, dan pembayaran di tangan BUMN Ekspor."},
+ {where:"Kantor pabean pelabuhan muat", t:"Pemberitahuan pabean dan pungutan",
+  d:"Eksportir menyampaikan PEB dengan Persetujuan Ekspor sebagai dokumen pelengkap pabean. DJBC memungut bea keluar dan pungutan ekspor.",
+  regs:[
+   {i:"keu",no:"PMK 155/2022",ttl:"Ketentuan Kepabeanan di Bidang Ekspor",pt:["Barang ekspor wajib diberitahukan dengan PEB","Pelaksana teknis: PER-9/BC/2023"]},
+   {i:"keu",no:"KMK 33/MK/BC/2026",ttl:"Daftar barang dibatasi ekspor berdasarkan Permendag 16/2026",pt:["Berlaku 1 Juni 2026","Dasar pengawasan larangan dan pembatasan oleh DJBC"],nw:true},
+   {i:"keu",no:"PMK 38/2024 jo PMK 68/2025",ttl:"Penetapan barang ekspor yang dikenakan bea keluar",pt:["Tarif CPO mengikuti harga referensi","Oktober 2026: USD 178 per MT"]},
+   {i:"keu",no:"PMK 69/2025 jo PMK 9/2026",ttl:"Tarif pungutan ekspor kelapa sawit",pt:["Pungutan CPO naik menjadi 12,5 persen sejak 2 Maret 2026","Oktober 2026: USD 130,269 per MT"],nw:true}
+  ]},
+ {where:"Dermaga dan kapal tanker", t:"Pemuatan dan keberangkatan kapal",
+  d:"CPO dipompa dari tangki timbun ke kapal. Perusahaan bongkar muat dan syahbandar mengawasi kegiatan di pelabuhan.",
+  regs:[
+   {i:"hub",no:"UU 17/2008 jo UU 66/2024",ttl:"Pelayaran",pt:["Perubahan ketiga UU Pelayaran","Dasar kepelabuhanan dan angkutan laut"]},
+   {i:"hub",no:"PP 31/2021",ttl:"Penyelenggaraan Bidang Pelayaran",pt:["Angkutan di perairan, kepelabuhanan, keselamatan","Status berlaku"]},
+   {i:"hub",no:"PM 59/2021 jo PM 3/2026",ttl:"Usaha bongkar muat barang",pt:["Pelaksana bongkar muat: PBM atau perusahaan angkutan laut nasional","Tenaga kerja bongkar muat wajib bersertifikat"],nw:true}
+  ]},
+ {where:"Laut lepas sampai pelabuhan tujuan", t:"Pelayaran internasional dan rute lintas negara",
+  d:"Kapal berlayar ke negara tujuan. Kiriman lanjutan di kawasan ASEAN tunduk pada kerangka multimoda regional.",
+  regs:[
+   {i:"pres",no:"Perpres 14/2016",ttl:"Pengesahan ASEAN Framework Agreement on Multimodal Transport",pt:["Kerangka multimoda antarnegara ASEAN"]},
+   {i:"hub",no:"PM 4/2026 Pasal 17",ttl:"Pendaftaran BUAM nasional untuk beroperasi di ASEAN",pt:["Permohonan lewat Direktur Jenderal Integrasi Transportasi dan Multimoda","Menteri menetapkan persetujuan pendaftaran"],nw:true}
+  ]},
+ {where:"Bank Himbara", t:"Pembayaran dan devisa hasil ekspor",
+  d:"Pembeli membayar. Devisa hasil ekspor wajib masuk dan tertahan di sistem keuangan Indonesia.",
+  regs:[
+   {i:"pres",no:"PP 21/2026",ttl:"Devisa Hasil Ekspor dari kegiatan SDA",pt:["Berlaku 1 Juni 2026, mengganti PP 36/2023","Retensi 100 persen paling singkat 12 bulan","Penempatan lewat bank Himbara","Konversi ke rupiah maksimal 50 persen"],nw:true},
+   {i:"dag",no:"Permendag 16/2026",ttl:"Laporan realisasi ekspor",pt:["Memuat HS, nilai, pelabuhan muat, negara tujuan, dan nomor PEB","Sanksi sampai pencabutan Persetujuan Ekspor"]}
+  ]}
+];
+
+const SOURCES = [
+ ["Pajakku: Aturan baru ekspor CPO (Permendag 16/2026)","https://pajakku.com/artikel/aturan-baru-ekspor-cpo-dan-produk-turunan-sawit"],
+ ["Bisnis.com: PP 24/2026 ekspor satu pintu","https://ekonomi.bisnis.com/read/20260605/9/1978729/prabowo-resmi-rilis-pp-ekspor-satu-pintu-batu-bara-sawit-begini-detailnya"],
+ ["DDTCNews: PP 24/2026 dan Permendag 15, 16, 17/2026","https://news.ddtc.co.id/berita/nasional/1820079/pp-242026-mungkinkan-pemerintah-perluas-kebijakan-ekspor-satu-pintu"],
+ ["JDIH Kemenkeu: KMK 33/MK/BC/2026","https://jdih.kemenkeu.go.id/api/download/c28caab9-2f81-47e7-a2dd-aef3b5d1b407/33_MK_BC_2026.pdf"],
+ ["DDTCNews: Bea keluar dan pungutan CPO Oktober 2026","https://news.ddtc.co.id/data-alat/pungutan-komoditas/1823057/harga-referensi-naik-tarif-bea-keluar-cpo-oktober-jadi-us178mt"],
+ ["Kontan: PMK 9/2026 pungutan ekspor 12,5 persen","https://nasional.kontan.co.id/news/inilah-tarif-ekspor-sawit-terbaru-mulai-2-maret-2026-cpo-jadi-125"],
+ ["DDTCNews: PMK 155/2022 kepabeanan ekspor","https://news.ddtc.co.id/berita/nasional/44670/berlaku-mulai-hari-ini-aturan-kepabeanan-bidang-ekspor-terbaru"],
+ ["Kemenkeu BKF: Siaran pers PP 21/2026 DHE SDA","https://fiskal.kemenkeu.go.id/publikasi/siaran-pers-detil/631"],
+ ["Bareksa: Ringkasan PP 21/2026","https://www.bareksa.com/berita/saham/2026-06-02/menkeu-purbaya-kepatuhan-repatriasi-devisa-hasil-ekspor-sumber-daya-alam-wajib-100-mulai-1-juni"],
+ ["JDIH Kemenko Infrastruktur: PM 4/2026","https://jdih.kemenkoinfra.go.id/cfind/source/files/permenhub/2026/2026pmhub004.pdf"],
+ ["BPK: Permenhub 3/2026","https://peraturan.bpk.go.id/Details/351208/permenhub-no-3-tahun-2026"],
+ ["Peraturan.go.id: PM 3/2026","https://www.peraturan.go.id/files/permenhub-no-3-tahun-2026.pdf"],
+ ["BPK: PP 31/2021","https://peraturan.bpk.go.id/Details/161880/pp-no-31-tahun-2021"],
+ ["Pasal.id: Permendag 65/2020","https://pasal.id/peraturan/permen/permendag-no-65-tahun-2020"],
+ ["Bisnis.com: Perpres 16/2025 ISPO","https://ekonomi.bisnis.com/read/20250422/12/1871013/prabowo-teken-perpres-sertifikasi-sawit-berkelanjutan-ini-isinya"],
+ ["Peraturan.go.id: Permentan 33/2025","https://peraturan.go.id/files/permentan-no-33-tahun-2025.pdf"],
+ ["Perpres 14/2016 pengesahan AFAMT (BPK)","https://peraturan.bpk.go.id/Details/39756/perpres-no-14-tahun-2016"],
+ ["KabarBursa: ALFI minta KBLI dan OSS diselaraskan","https://www.kabarbursa.com/makro/regulasi-logistik-disorot-alfi-minta-kbli-dan-oss-diselaraskan.md"],
+ ["Analisis DPR: Pengawasan ODOL dan PM 18/2021","https://berkas.dpr.go.id/puspanlakuu/analisis/analisis-public-11.pdf"],
+ ["Pasardana: Pengawasan angkutan barang 2026","https://pasardana.id/news/2026/10/5/kemenhub-perkuat-pengawasan-angkutan-barang-demi-keselamatan-lalin-dan-jalan"]
+];
+
+const active = new Set(Object.keys(INST));
+const legend = document.getElementById('legend');
+Object.entries(INST).forEach(([k,v])=>{
+  const b=document.createElement('button');
+  b.type='button';b.id='f-'+k;b.className='chip c-'+k;b.textContent=v.n;b.setAttribute('aria-pressed','true');
+  b.addEventListener('click',()=>{active.has(k)?active.delete(k):active.add(k);b.setAttribute('aria-pressed',active.has(k));apply();});
+  legend.appendChild(b);
+});
+const rs=document.createElement('button');rs.type='button';rs.className='reset';rs.id='f-reset';rs.textContent='Tampilkan semua';
+rs.addEventListener('click',()=>{Object.keys(INST).forEach(k=>active.add(k));legend.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','true'));apply();});
+legend.appendChild(rs);
+
+const route=document.getElementById('route');
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+STAGES.forEach((s,idx)=>{
+  const li=document.createElement('li');li.className='stage';
+  const regs=s.regs.map(r=>`<article class="reg c-${r.i}" data-i="${r.i}"><div class="no">${esc(r.no)}${r.nw?'<span class="new">2026</span>':''}</div><div class="ttl">${esc(r.ttl)}</div><ul>${r.pt.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><div class="who">${INST[r.i].n}</div></article>`).join('');
+  li.innerHTML=`<div class="rail"><div class="node">${idx+1}</div></div><div class="body"><div class="st-head"><span class="where">${esc(s.where)}</span><h3>${esc(s.t)}</h3><p>${esc(s.d)}</p></div><div class="regs">${regs}</div>${s.flag?`<div class="flag"><b>Titik irisan</b>${esc(s.flag)}</div>`:''}</div>`;
+  route.appendChild(li);
+});
+function apply(){document.querySelectorAll('.reg').forEach(el=>el.classList.toggle('dim',!active.has(el.dataset.i)));}
+
+const m=document.getElementById('matrix');
+let h='<thead><tr><th class="inst">Instansi</th>'+STAGES.map((s,i)=>`<th>${i+1}. ${esc(s.t.split(' ').slice(0,2).join(' '))}</th>`).join('')+'</tr></thead><tbody>';
+Object.entries(INST).forEach(([k,v])=>{
+  h+=`<tr><td class="inst"><span class="chip c-${k}">${v.n}</span></td>`+STAGES.map(s=>s.regs.some(r=>r.i===k)?`<td class="c-${k}"><span class="dot" aria-label="ada"></span></td>`:'<td></td>').join('')+'</tr>';
+});
+m.innerHTML=h+'</tbody>';
+
+/* ---------- Lembar jawaban ---------- */
+/* Ganti dengan URL Web app dari Google Apps Script (berakhiran /exec). */
+const SCRIPT_URL = 'TEMPEL_URL_WEB_APP_DI_SINI';
+
+const $=id=>document.getElementById(id);
+const form=$('lembar'), qs=$('qs'), fStatus=$('f-status'), fMsg=$('f-msg');
+const IDF=['i-absen','i-nama','i-notar','i-kelas'], QF=['q1','q2','q3'];
+const KEYS={'i-absen':'absen','i-nama':'nama','i-notar':'notar','i-kelas':'kelas'};
+const DRAFT='draf-jawaban-ekspor-cpo';
+let saving=false, draftTimer=null;
+
+if(!/^https:\/\/script\.google\.com\//.test(SCRIPT_URL)) fStatus.textContent='Formulir belum tersambung ke Google Sheet. Dosen perlu mengisi SCRIPT_URL di index.html.';
+
+function identOk(){
+  return /^[0-9]{1,3}$/.test($('i-absen').value.trim()) && $('i-nama').value.trim().length>=3 && $('i-notar').value.trim().length>=3 && $('i-kelas').value.trim().length>=2;
+}
+function syncLock(){ qs.disabled=!identOk(); }
+function readForm(){ const o={}; IDF.forEach(id=>o[KEYS[id]]=$(id).value.trim()); QF.forEach(id=>o[id]=$(id).value.trim()); return o; }
+function saveDraft(){ clearTimeout(draftTimer); draftTimer=setTimeout(()=>{ try{ localStorage.setItem(DRAFT,JSON.stringify(readForm())); }catch(e){} },400); }
+[...IDF,...QF].forEach(id=>$(id).addEventListener('input',()=>{ $(id).removeAttribute('aria-invalid'); syncLock(); saveDraft(); }));
+try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d){ IDF.forEach(id=>{ if(typeof d[KEYS[id]]==='string') $(id).value=d[KEYS[id]]; }); QF.forEach(id=>{ if(typeof d[id]==='string') $(id).value=d[id]; }); } }catch(e){}
+syncLock();
+const fmtTime=s=>{ try{ return new Date(s).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return s||'';} };
+
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(saving) return;
+  let bad=null;
+  if(!identOk()){
+    IDF.forEach(id=>{ if(!$(id).value.trim()) $(id).setAttribute('aria-invalid','true'); });
+    if(!/^[0-9]{1,3}$/.test($('i-absen').value.trim())) $('i-absen').setAttribute('aria-invalid','true');
+    bad='Lengkapi identitas. Nomor Absen hanya berisi angka.';
+  } else {
+    const empty=QF.filter(id=>$(id).value.trim().length<10);
+    empty.forEach(id=>$(id).setAttribute('aria-invalid','true'));
+    if(empty.length) bad='Jawab semua pertanyaan. Tiap jawaban minimal 10 karakter.';
+  }
+  if(bad){ fMsg.className='msg err'; fMsg.textContent=bad; return; }
+  if(!/^https:\/\/script\.google\.com\//.test(SCRIPT_URL)){ fMsg.className='msg err'; fMsg.textContent='Formulir belum tersambung. Hubungi dosen.'; return; }
+  saving=true; $('kirim').disabled=true; fMsg.className='msg'; fMsg.textContent='Mengirim…';
+  const body=Object.assign(readForm(),{website:$('i-web').value});
+  try{
+    // text/plain menghindari preflight CORS pada Apps Script.
+    const res=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const out=await res.json();
+    if(!out.ok) throw new Error(out.error||'Gagal');
+    fMsg.className='msg ok';
+    fMsg.textContent=(out.diperbarui?'Jawaban diperbarui':'Jawaban terkirim')+' pada '+fmtTime(out.waktu)+'. Simpan tangkapan layar sebagai bukti.';
+    $('kirim').textContent='Kirim ulang jawaban';
+  }catch(err){
+    fMsg.className='msg err';
+    fMsg.textContent=(err&&err.message&&err.message!=='Failed to fetch'&&err.message!=='Gagal')?err.message:'Jawaban gagal terkirim. Periksa koneksi lalu kirim lagi. Isian Anda tetap tersimpan di perangkat ini.';
+  }finally{ saving=false; $('kirim').disabled=false; }
+});
+
+document.getElementById('sources').innerHTML=SOURCES.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('');
+</script>
+
+</body>
+</html>
