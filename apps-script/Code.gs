@@ -4,13 +4,17 @@
  *
  * Cara pakai singkat (panduan lengkap ada di README.md):
  * 1. Tempel file ini di Extensions > Apps Script pada Google Sheet Anda.
- * 2. Isi Script Properties: ADMIN_KEY (kata sandi halaman admin).
+ * 2. Isi Script Properties: ADMIN_KEY (kata sandi halaman admin) dan
+ *    KUNCI_PG (kunci pilihan ganda, 10 huruf A-D tanpa spasi, contoh ABCDABCDAB).
+ *    Kunci sengaja tidak ditulis di file ini karena repo GitHub bersifat publik.
  * 3. Deploy > New deployment > Web app, Execute as: Me, Who has access: Anyone.
  * 4. Salin URL Web app ke SCRIPT_URL di index.html dan admin.html.
  */
 
 const SHEET_NAME = 'Jawaban';
-const HEADERS = ['Waktu', 'Nomor Absen', 'Nama Lengkap', 'Notar', 'Kelas', 'Jawaban 1', 'Jawaban 2', 'Jawaban 3'];
+const JUMLAH_PG = 10;
+const PG_HEADERS = Array.from({ length: JUMLAH_PG }, (_, i) => 'PG' + (i + 1));
+const HEADERS = ['Waktu', 'Nomor Absen', 'Nama Lengkap', 'Notar', 'Kelas', 'Jawaban 1', 'Jawaban 2', 'Jawaban 3', 'Skor PG'].concat(PG_HEADERS);
 const MAX_LEN = { absen: 3, nama: 80, notar: 20, kelas: 20, jawaban: 5000 };
 
 function doPost(e) {
@@ -44,12 +48,16 @@ function saveAnswer(b) {
   if (nama.length < 3 || notar.length < 3 || kelas.length < 2) return reply({ ok: false, error: 'Lengkapi Nama Lengkap, Notar, dan Kelas.' });
   if (q1.length < 10 || q2.length < 10 || q3.length < 10) return reply({ ok: false, error: 'Tiap jawaban minimal 10 karakter.' });
 
+  const pg = Array.isArray(b.pg) ? b.pg.map(v => String(v || '').trim().toUpperCase()) : [];
+  if (pg.length !== JUMLAH_PG || pg.some(v => !/^[ABCD]$/.test(v))) return reply({ ok: false, error: 'Jawab semua soal pilihan ganda.' });
+  const skor = hitungSkor(pg);
+
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) return reply({ ok: false, error: 'Server sedang sibuk. Kirim ulang dalam beberapa detik.' });
   try {
     const sh = getSheet();
     const now = new Date();
-    const row = [now, absen, nama, notar, kelas, q1, q2, q3];
+    const row = [now, absen, nama, notar, kelas, q1, q2, q3, skor].concat(pg);
     // Satu baris per Notar: kiriman baru menimpa kiriman lama.
     const last = sh.getLastRow();
     let target = 0;
@@ -80,7 +88,9 @@ function exportRows(b) {
   const data = rows.map(r => ({
     waktu: r[0] instanceof Date ? r[0].toISOString() : String(r[0]),
     absen: String(r[1]), nama: String(r[2]), notar: String(r[3]), kelas: String(r[4]),
-    q1: String(r[5]), q2: String(r[6]), q3: String(r[7])
+    q1: String(r[5]), q2: String(r[6]), q3: String(r[7]),
+    skor: r[8] === '' ? '' : Number(r[8]),
+    pg: r.slice(9, 9 + JUMLAH_PG).map(String)
   }));
   return reply({ ok: true, headers: HEADERS, rows: data });
 }
@@ -89,6 +99,11 @@ function getSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(SHEET_NAME);
   if (!sh) sh = ss.insertSheet(SHEET_NAME);
+  const lastCol = sh.getLastColumn();
+  if (sh.getLastRow() > 0 && lastCol < HEADERS.length) {
+    // Sheet lama (8 kolom): tambahkan judul kolom pilihan ganda.
+    sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight('bold');
+  }
   if (sh.getLastRow() === 0) {
     sh.appendRow(HEADERS);
     sh.setFrozenRows(1);
@@ -97,6 +112,24 @@ function getSheet() {
     sh.getRange('B:E').setNumberFormat('@');
   }
   return sh;
+}
+
+function hitungSkor(pg) {
+  const kunci = String(PropertiesService.getScriptProperties().getProperty('KUNCI_PG') || '').toUpperCase().replace(/[^ABCD]/g, '');
+  if (kunci.length !== JUMLAH_PG) return '';
+  let benar = 0;
+  for (let i = 0; i < JUMLAH_PG; i++) if (pg[i] === kunci[i]) benar++;
+  return benar * (100 / JUMLAH_PG);
+}
+
+/** Hitung ulang Skor PG semua baris, misalnya setelah kunci diperbaiki. Jalankan dari editor. */
+function hitungUlangSkor() {
+  const sh = getSheet();
+  const last = sh.getLastRow();
+  if (last < 2) return;
+  const range = sh.getRange(2, 10, last - 1, JUMLAH_PG);
+  const skor = range.getDisplayValues().map(r => [r.every(v => v) ? hitungSkor(r.map(v => v.toUpperCase())) : '']);
+  sh.getRange(2, 9, last - 1, 1).setValues(skor);
 }
 
 function clean(v, max) {

@@ -7,7 +7,7 @@ Bahan ajar Transportasi Multimoda, D3 Manajemen Logistik, Poltrada Bali. Halaman
 | File | Fungsi |
 |---|---|
 | `index.html` | Peta regulasi dan formulir jawaban untuk taruna |
-| `admin.html` | Rekap jawaban dan tombol unduh xlsx, dilindungi kata sandi |
+| `admin.html` | Rekap jawaban, Skor PG, dan tombol unduh xlsx, dilindungi kata sandi |
 | `apps-script/Code.gs` | Skrip penerima jawaban, ditempel di Google Apps Script |
 
 Kata sandi admin tidak tersimpan di repo. Kata sandi berada di Script Properties milik akun Google Anda.
@@ -27,6 +27,7 @@ Total waktu sekitar 20 menit.
 7. Di editor Apps Script, buka **Setelan proyek** (ikon roda gigi di kiri). Gulir ke **Properti skrip**, tekan **Tambahkan properti skrip**.
    - Properti: `ADMIN_KEY`
    - Nilai: kata sandi admin pilihan Anda, minimal 10 karakter
+   - Tambahkan properti kedua. Properti: `KUNCI_PG`. Nilai: kunci 10 soal pilihan ganda berurutan tanpa spasi, contoh `ABCDABCDAB`. Kunci sengaja tidak ditulis di repo karena repo bersifat publik.
    - Tekan **Simpan properti skrip**.
 8. Tekan **Terapkan > Deployment baru**. Klik ikon roda gigi di samping "Pilih jenis", pilih **Aplikasi web**. Isi:
    - Deskripsi: `Penerima jawaban v1`
@@ -63,6 +64,12 @@ Bila pilihan **Siapa saja** tidak muncul, admin Google Workspace kampus membatas
 - Isian taruna tersimpan sementara di perangkatnya. Isian tidak hilang bila sinyal putus saat mengirim.
 - File xlsx memuat kolom **Nilai** kosong untuk penilaian.
 - Filter **Kelas** di halaman admin memisahkan unduhan per kelas.
+
+## Pilihan ganda
+
+Formulir memuat 10 soal pilihan ganda materi pertemuan 1 sampai 5 (Bagian A) dan 3 pertanyaan diskusi (Bagian B). Apps Script menghitung **Skor PG** skala 0 sampai 100 memakai kunci di Script Properties `KUNCI_PG`. Taruna tidak melihat skor maupun kunci. Bila kunci diperbaiki setelah taruna mengirim, jalankan fungsi `hitungUlangSkor` dari editor Apps Script.
+
+Soal pilihan ganda tersimpan di konstanta `PG` dalam `index.html`. Bila urutan atau isi soal diubah, perbarui juga `KUNCI_PG`.
 
 ## Bila Code.gs diubah
 

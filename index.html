@@ -105,6 +105,17 @@ input[aria-invalid="true"],textarea[aria-invalid="true"]{border-color:var(--dag)
 textarea{resize:vertical;line-height:1.5}
 fieldset:disabled{opacity:.55}
 .lock{margin:0;font-size:13px;color:var(--muted)}
+.pg-note{margin:0}
+.pg-list{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.pg{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:10px;row-gap:8px;padding:12px;border:1px solid var(--line);border-radius:6px}
+.pg[data-bad="true"]{border-color:var(--dag)}
+.pg .meet{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.pg .stem{font-weight:500;font-size:14px;line-height:1.45}
+.pg .opts{grid-column:2;display:grid;gap:6px}
+.pg .opt{display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:start;gap:8px;font-weight:400;font-size:14px;padding:6px 8px;border-radius:5px;cursor:pointer}
+.pg .opt:hover{background:var(--bg)}
+.pg .opt input{width:auto;margin:3px 0 0;accent-color:var(--accent)}
+.pg .opt b{font-family:var(--f-mono);font-weight:500;color:var(--muted)}
 fieldset:not(:disabled) .lock{display:none}
 .q{grid-template-columns:28px minmax(0,1fr);column-gap:10px;font-weight:500;font-size:14px;line-height:1.45}
 .q textarea{grid-column:2}
@@ -164,8 +175,14 @@ table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
           <label for="i-kelas">Kelas<input id="i-kelas" name="kelas" maxlength="20" required placeholder="contoh: ML 2A" autocomplete="off"></label>
         </div>
       </fieldset>
+      <fieldset class="pgs" id="pgs" disabled>
+        <legend>Bagian A. Pilihan ganda pertemuan 1 sampai 5</legend>
+        <p class="lock">Lengkapi identitas untuk membuka soal.</p>
+        <p class="note pg-note">Pilih satu jawaban paling tepat untuk tiap soal.</p>
+        <ol class="pg-list" id="pg-list"></ol>
+      </fieldset>
       <fieldset class="qs" id="qs" disabled>
-        <legend>Pertanyaan</legend>
+        <legend>Bagian B. Pertanyaan diskusi</legend>
         <p class="lock" id="lock-note">Lengkapi identitas untuk membuka pertanyaan.</p>
         <label for="q1" class="q"><span class="qn">1</span><span>Tahap 4 menjadi tempat bertemu Kemenhub, Kemendag, dan BUMN Ekspor. Siapa yang menerbitkan dokumen angkutan multimoda bila DSI memegang kontrak ekspor?</span><textarea id="q1" name="q1" rows="5" required></textarea></label>
         <label for="q2" class="q"><span class="qn">2</span><span>Freight forwarder dengan KBLI 52311 mengatur truk, gudang, dan kapal sekaligus. Apakah kegiatan ini sudah masuk ranah KBLI 52291 angkutan multimoda?</span><textarea id="q2" name="q2" rows="5" required></textarea></label>
@@ -178,7 +195,6 @@ table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
   <section class="sec">
     <h2>Sumber</h2>
     <ol class="src" id="sources"></ol>
-    <p class="note">Peta ini merangkum regulasi untuk bahan ajar. Periksa naskah resmi di JDIH masing-masing instansi sebelum mengutipnya. Aturan angkutan jalan merujuk PM 60/2019 dan PM 18/2021 karena belum ditemukan pengganti per tanggal di atas.</p>
   </section>
 </div>
 
@@ -316,6 +332,20 @@ const form=$('lembar'), qs=$('qs'), fStatus=$('f-status'), fMsg=$('f-msg');
 const IDF=['i-absen','i-nama','i-notar','i-kelas'], QF=['q1','q2','q3'];
 const KEYS={'i-absen':'absen','i-nama':'nama','i-notar':'notar','i-kelas':'kelas'};
 const DRAFT='draf-jawaban-ekspor-cpo';
+const PG=[
+ {m:'Pertemuan 1',q:'Andrejić dkk (2023) menilai enam struktur distribusi fisik dengan metode FUCOM dan ADAM. Struktur mana yang menempati peringkat terbaik pada kasus yang diuji?',o:['Cross-dock','Gudang pengecer','Layanan pihak ketiga logistik (3PL)','Pengiriman langsung']},
+ {m:'Pertemuan 1',q:'Onstein dkk (2019) menimbang tujuh faktor penentu struktur distribusi. Faktor mana yang mendapat bobot tertinggi?',o:['Biaya logistik','Aksesibilitas lokasi','Ketersediaan lahan dan tenaga kerja','Karakteristik produk']},
+ {m:'Pertemuan 2',q:'Menurut hukum Pareto dalam distribusi, 20 persen pelanggan menyumbang berapa persen pendapatan perusahaan?',o:['50 persen','60 persen','70 persen','80 persen']},
+ {m:'Pertemuan 2',q:'Roti dan kue punya umur simpan pendek. Saluran distribusi apa yang paling sesuai untuk produk seperti ini?',o:['Saluran panjang dengan banyak perantara','Saluran cepat atau pendek','Saluran pihak ketiga dengan stok besar','Saluran eksklusif lewat dealer resmi']},
+ {m:'Pertemuan 3',q:'Gohari dkk (2022) meninjau 27 studi pemilihan moda antarmoda. Kriteria mana yang paling sering mendapat bobot tertinggi?',o:['Waktu pengiriman','Biaya','Emisi CO2','Keandalan']},
+ {m:'Pertemuan 3',q:'PP Nomor 8 Tahun 2011 mendefinisikan angkutan multimoda sebagai angkutan barang dengan paling sedikit dua moda berbeda atas dasar apa?',o:['Satu kontrak sebagai dokumen angkutan multimoda','Dua kontrak terpisah untuk tiap moda','Satu izin usaha untuk tiap moda','Satu kapal dan satu truk milik perusahaan sendiri']},
+ {m:'Pertemuan 4',q:'Metode Center of Gravity memindahkan gudang UMKM hijab sehingga jarak tempuh turun dari 1.446 km menjadi 264,6 km. Berapa penurunan biaya distribusinya?',o:['25,30 persen','37,78 persen','55,97 persen','67,81 persen']},
+ {m:'Pertemuan 4',q:'Belt conveyor di Pelabuhan Indonesia III menaikkan kapasitas bongkar muat dari 80 ton per jam menjadi berapa ton per jam?',o:['100','120','200','150']},
+ {m:'Pertemuan 5',q:'Berapa persen biaya logistik Indonesia terhadap PDB tahun 2023 menurut Bappenas dan BPS?',o:['8 persen','14,29 persen','23,5 persen','30 persen']},
+ {m:'Pertemuan 5',q:'Dalam Sistranas, setiap moda memiliki empat unsur. Apa saja keempat unsur itu?',o:['Sarana, prasarana, perangkat lunak, dan perangkat pikir','Sarana, prasarana, tarif, dan regulasi','Armada, terminal, SDM, dan anggaran','Jalan, rel, pelabuhan, dan bandara']}
+];
+$('pg-list').innerHTML=PG.map((p,i)=>`<li class="pg" id="pg-${i+1}"><span class="qn">${i+1}</span><div><div class="meet">${p.m}</div><div class="stem">${esc(p.q)}</div></div><div class="opts" role="radiogroup" aria-labelledby="pg-${i+1}">${p.o.map((t,j)=>{const L='ABCD'[j];return `<label class="opt" for="pg${i+1}${L}"><input type="radio" id="pg${i+1}${L}" name="pg${i+1}" value="${L}"><b>${L}.</b><span>${esc(t)}</span></label>`;}).join('')}</div></li>`).join('');
+form.addEventListener('change',e=>{ if(e.target.name&&e.target.name.startsWith('pg')){ e.target.closest('.pg').dataset.bad='false'; saveDraft(); } });
 let saving=false, draftTimer=null;
 
 if(!/^https:\/\/script\.google\.com\//.test(SCRIPT_URL)) fStatus.textContent='Formulir belum tersambung ke Google Sheet. Dosen perlu mengisi SCRIPT_URL di index.html.';
@@ -323,11 +353,11 @@ if(!/^https:\/\/script\.google\.com\//.test(SCRIPT_URL)) fStatus.textContent='Fo
 function identOk(){
   return /^[0-9]{1,3}$/.test($('i-absen').value.trim()) && $('i-nama').value.trim().length>=3 && $('i-notar').value.trim().length>=3 && $('i-kelas').value.trim().length>=2;
 }
-function syncLock(){ qs.disabled=!identOk(); }
-function readForm(){ const o={}; IDF.forEach(id=>o[KEYS[id]]=$(id).value.trim()); QF.forEach(id=>o[id]=$(id).value.trim()); return o; }
+function syncLock(){ const lock=!identOk(); qs.disabled=lock; $('pgs').disabled=lock; }
+function readForm(){ const o={}; IDF.forEach(id=>o[KEYS[id]]=$(id).value.trim()); QF.forEach(id=>o[id]=$(id).value.trim()); o.pg=PG.map((_,i)=>{ const c=form.querySelector(`input[name="pg${i+1}"]:checked`); return c?c.value:''; }); return o; }
 function saveDraft(){ clearTimeout(draftTimer); draftTimer=setTimeout(()=>{ try{ localStorage.setItem(DRAFT,JSON.stringify(readForm())); }catch(e){} },400); }
 [...IDF,...QF].forEach(id=>$(id).addEventListener('input',()=>{ $(id).removeAttribute('aria-invalid'); syncLock(); saveDraft(); }));
-try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d){ IDF.forEach(id=>{ if(typeof d[KEYS[id]]==='string') $(id).value=d[KEYS[id]]; }); QF.forEach(id=>{ if(typeof d[id]==='string') $(id).value=d[id]; }); } }catch(e){}
+try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d){ IDF.forEach(id=>{ if(typeof d[KEYS[id]]==='string') $(id).value=d[KEYS[id]]; }); QF.forEach(id=>{ if(typeof d[id]==='string') $(id).value=d[id]; }); if(Array.isArray(d.pg)) d.pg.forEach((v,i)=>{ const r=form.querySelector(`input[name="pg${i+1}"][value="${v}"]`); if(r) r.checked=true; }); } }catch(e){}
 syncLock();
 const fmtTime=s=>{ try{ return new Date(s).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return s||'';} };
 
@@ -340,6 +370,9 @@ form.addEventListener('submit',async e=>{
     if(!/^[0-9]{1,3}$/.test($('i-absen').value.trim())) $('i-absen').setAttribute('aria-invalid','true');
     bad='Lengkapi identitas. Nomor Absen hanya berisi angka.';
   } else {
+    const kosong=readForm().pg.map((v,i)=>v?-1:i).filter(i=>i>=0);
+    document.querySelectorAll('.pg').forEach((el,i)=>el.dataset.bad=String(kosong.includes(i)));
+    if(kosong.length){ fMsg.className='msg err'; fMsg.textContent='Soal pilihan ganda nomor '+kosong.map(i=>i+1).join(', ')+' belum dijawab.'; document.querySelectorAll('.pg')[kosong[0]].scrollIntoView({behavior:'smooth',block:'center'}); return; }
     const empty=QF.filter(id=>$(id).value.trim().length<10);
     empty.forEach(id=>$(id).setAttribute('aria-invalid','true'));
     if(empty.length) bad='Jawab semua pertanyaan. Tiap jawaban minimal 10 karakter.';

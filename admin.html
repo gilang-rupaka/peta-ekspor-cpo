@@ -61,7 +61,7 @@ tbody tr:last-child td{border-bottom:0}
       <span class="msg" id="m-hasil" role="status"></span>
     </div>
     <div class="tbl" style="margin-top:14px">
-      <table><thead><tr><th>Absen</th><th>Nama Lengkap</th><th>Notar</th><th>Kelas</th><th>Jawaban 1</th><th>Jawaban 2</th><th>Jawaban 3</th><th>Waktu kirim</th></tr></thead>
+      <table><thead><tr><th>Absen</th><th>Nama Lengkap</th><th>Notar</th><th>Kelas</th><th>Skor PG</th><th>Jawaban 1</th><th>Jawaban 2</th><th>Jawaban 3</th><th>Waktu kirim</th></tr></thead>
       <tbody id="isi"></tbody></table>
     </div>
   </section>
@@ -91,7 +91,7 @@ function render(){
   const list=terpilih();
   $('m-hasil').className='msg'; $('m-hasil').textContent=list.length+' jawaban';
   $('b-xlsx').disabled=!list.length;
-  $('isi').innerHTML=list.length?list.map(r=>`<tr><td class="num">${esc(r.absen)}</td><td>${esc(r.nama)}</td><td class="num">${esc(r.notar)}</td><td>${esc(r.kelas)}</td><td class="ans">${esc(r.q1)}</td><td class="ans">${esc(r.q2)}</td><td class="ans">${esc(r.q3)}</td><td>${esc(fmt(r.waktu))}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">Belum ada jawaban masuk.</td></tr>';
+  $('isi').innerHTML=list.length?list.map(r=>`<tr><td class="num">${esc(r.absen)}</td><td>${esc(r.nama)}</td><td class="num">${esc(r.notar)}</td><td>${esc(r.kelas)}</td><td class="num">${r.skor===''||r.skor==null?'-':esc(r.skor)}</td><td class="ans">${esc(r.q1)}</td><td class="ans">${esc(r.q2)}</td><td class="ans">${esc(r.q3)}</td><td>${esc(fmt(r.waktu))}</td></tr>`).join(''):'<tr><td colspan="9" class="empty">Belum ada jawaban masuk.</td></tr>';
 }
 
 $('masuk').addEventListener('submit',async e=>{
@@ -109,11 +109,12 @@ $('b-segar').addEventListener('click',async()=>{ $('m-hasil').textContent='Memua
 $('b-xlsx').addEventListener('click',()=>{
   if(typeof XLSX==='undefined'){ $('m-hasil').className='msg err'; $('m-hasil').textContent='Pustaka xlsx gagal dimuat. Periksa koneksi internet.'; return; }
   const list=terpilih();
-  const aoa=[['No','Nomor Absen','Nama Lengkap','Notar','Kelas','Jawaban 1','Jawaban 2','Jawaban 3','Waktu Kirim','Nilai']]
-    .concat(list.map((r,i)=>[i+1,+r.absen||r.absen,r.nama,r.notar,r.kelas,r.q1,r.q2,r.q3,fmt(r.waktu),'']));
+  const pgHead=Array.from({length:10},(_,i)=>'PG'+(i+1));
+  const aoa=[['No','Nomor Absen','Nama Lengkap','Notar','Kelas','Skor PG','Nilai Esai','Jawaban 1','Jawaban 2','Jawaban 3','Waktu Kirim'].concat(pgHead)]
+    .concat(list.map((r,i)=>[i+1,+r.absen||r.absen,r.nama,r.notar,r.kelas,r.skor===''||r.skor==null?'':Number(r.skor),'',r.q1,r.q2,r.q3,fmt(r.waktu)].concat((r.pg||[]).slice(0,10))));
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:4},{wch:8},{wch:28},{wch:14},{wch:10},{wch:50},{wch:50},{wch:50},{wch:17},{wch:8}];
-  ws['!autofilter']={ref:'A1:J'+(list.length+1)};
+  ws['!cols']=[{wch:4},{wch:8},{wch:28},{wch:14},{wch:10},{wch:8},{wch:9},{wch:50},{wch:50},{wch:50},{wch:17}].concat(pgHead.map(()=>({wch:5})));
+  ws['!autofilter']={ref:'A1:U'+(list.length+1)};
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Jawaban');
   const k=$('f-kelas').value;
