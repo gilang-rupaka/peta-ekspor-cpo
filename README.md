@@ -38,7 +38,7 @@ Bila pilihan **Siapa saja** tidak muncul, admin Google Workspace kampus membatas
 
 ### Bagian B. Repo GitHub
 
-10. Di repo Anda, pilih **Add file > Upload files**. Unggah `index.html`, `admin.html`, `README.md`, dan folder `apps-script`. Tekan **Commit changes**.
+10. Semua file sudah berada di branch `main` repo ini. Lanjut ke langkah 11.
 11. Buka `index.html` di GitHub, tekan ikon pensil. Cari baris berikut:
     ```js
     const SCRIPT_URL = 'TEMPEL_URL_WEB_APP_DI_SINI';
