@@ -110,11 +110,11 @@ $('b-xlsx').addEventListener('click',()=>{
   if(typeof XLSX==='undefined'){ $('m-hasil').className='msg err'; $('m-hasil').textContent='Pustaka xlsx gagal dimuat. Periksa koneksi internet.'; return; }
   const list=terpilih();
   const pgHead=Array.from({length:10},(_,i)=>'PG'+(i+1));
-  const aoa=[['No','Nomor Absen','Nama Lengkap','Notar','Kelas','Skor PG','Nilai Esai','Jawaban 1','Jawaban 2','Jawaban 3','Waktu Kirim'].concat(pgHead)]
-    .concat(list.map((r,i)=>[i+1,+r.absen||r.absen,r.nama,r.notar,r.kelas,r.skor===''||r.skor==null?'':Number(r.skor),'',r.q1,r.q2,r.q3,fmt(r.waktu)].concat((r.pg||[]).slice(0,10))));
+  const aoa=[['No','Nomor Absen','Nama Lengkap','Notar','Kelas','Skor PG (0-100)','PG x 60%','Nilai Esai (0-100)','Esai x 40%','Nilai Akhir','Jawaban 1','Jawaban 2','Jawaban 3','Waktu Kirim'].concat(pgHead)]
+    .concat(list.map((r,i)=>{const sk=(r.skor===''||r.skor==null)?'':r.skor;const n=i+2;const pg=sk===''?0:Number(sk);return [i+1,+r.absen||r.absen,r.nama,r.notar,r.kelas,sk===''?'':Number(sk),{t:'n',f:`F${n}*0.6`,v:pg*0.6},'',{t:'n',f:`H${n}*0.4`,v:0},{t:'n',f:`G${n}+I${n}`,v:pg*0.6},r.q1,r.q2,r.q3,fmt(r.waktu)].concat((r.pg||[]).slice(0,10));}));
   const ws=XLSX.utils.aoa_to_sheet(aoa);
-  ws['!cols']=[{wch:4},{wch:8},{wch:28},{wch:14},{wch:10},{wch:8},{wch:9},{wch:50},{wch:50},{wch:50},{wch:17}].concat(pgHead.map(()=>({wch:5})));
-  ws['!autofilter']={ref:'A1:U'+(list.length+1)};
+  ws['!cols']=[{wch:4},{wch:8},{wch:28},{wch:14},{wch:10},{wch:10},{wch:9},{wch:11},{wch:9},{wch:10},{wch:50},{wch:50},{wch:50},{wch:17}].concat(pgHead.map(()=>({wch:5})));
+  ws['!autofilter']={ref:'A1:X'+(list.length+1)};
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Jawaban');
   const k=$('f-kelas').value;
