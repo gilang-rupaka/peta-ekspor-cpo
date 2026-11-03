@@ -93,6 +93,19 @@ tbody tr:last-child td{border-bottom:0}
 .src a{color:var(--accent)}
 .status{font-size:13.5px;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:6px;padding:10px 14px}
 .status:empty{display:none}
+.req{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:999px;font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--dag);border:1px solid var(--dag)}
+.ident label>span{display:flex;align-items:center;flex-wrap:wrap}
+dialog#konfirmasi{border:1px solid var(--line);border-radius:10px;padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--fg)}
+dialog#konfirmasi::backdrop{background:rgba(10,14,12,.6)}
+.k-box{padding:20px;display:grid;gap:12px;margin:0}
+.k-box h3{font-family:var(--f-display);font-size:20px;margin:0}
+.k-lead{margin:0;font-size:14px;color:var(--muted)}
+.k-lead.err{color:var(--dag);font-weight:600}
+.k-ident{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px;background:var(--bg);border-radius:6px;padding:10px 12px}
+.k-ident dt{color:var(--muted)} .k-ident dd{margin:0;font-weight:600;overflow-wrap:anywhere}
+.k-list{margin:0;padding-left:18px;font-size:14px;display:grid;gap:4px}
+.k-list li.ok{color:var(--hub)} .k-list li.no{color:var(--dag);font-weight:600}
+.k-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 .lembar{display:grid;gap:16px}
 fieldset{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:16px;margin:0;display:grid;gap:14px;min-width:0}
@@ -169,10 +182,10 @@ table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
       <fieldset class="ident">
         <legend>Identitas taruna</legend>
         <div class="grid4">
-          <label for="i-absen">Nomor Absen<select id="i-absen" name="absen" required><option value="">Pilih</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option></select></label>
-          <label for="i-nama" class="wide">Nama Lengkap<input id="i-nama" name="nama" maxlength="80" required autocomplete="off"></label>
-          <label for="i-notar">Notar<input id="i-notar" name="notar" inputmode="numeric" maxlength="20" required autocomplete="off"></label>
-          <label for="i-kelas">Kelas<select id="i-kelas" name="kelas" required><option value="">Pilih kelas</option><option value="MLog 2A">MLog 2A</option><option value="MLog 2B">MLog 2B</option><option value="MLog 2C">MLog 2C</option><option value="MLog 2D">MLog 2D</option></select></label>
+          <label for="i-absen"><span>Nomor Absen <span class="req">wajib</span></span><select id="i-absen" name="absen" required><option value="">Pilih</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option></select></label>
+          <label for="i-nama" class="wide"><span>Nama Lengkap <span class="req">wajib</span></span><input id="i-nama" name="nama" maxlength="80" required autocomplete="off"></label>
+          <label for="i-notar"><span>Notar <span class="req">wajib</span></span><input id="i-notar" name="notar" inputmode="numeric" pattern="[0-9]*" maxlength="20" required autocomplete="off"></label>
+          <label for="i-kelas"><span>Kelas <span class="req">wajib</span></span><select id="i-kelas" name="kelas" required><option value="">Pilih kelas</option><option value="MLog 2A">MLog 2A</option><option value="MLog 2B">MLog 2B</option><option value="MLog 2C">MLog 2C</option><option value="MLog 2D">MLog 2D</option></select></label>
         </div>
       </fieldset>
       <fieldset class="pgs" id="pgs" disabled>
@@ -183,7 +196,7 @@ table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
       </fieldset>
       <fieldset class="qs" id="qs" disabled>
         <legend>Bagian B. Pertanyaan diskusi</legend>
-        <p class="lock" id="lock-note">Lengkapi identitas untuk membuka pertanyaan.</p>
+        <p class="lock" id="lock-note">Lengkapi keempat kolom identitas untuk membuka pertanyaan. Notar hanya berisi angka.</p>
         <p class="note pg-note">Baca dulu peta regulasi ekspor CPO di bagian atas halaman ini, terutama kotak Titik irisan pada tahap 1 dan tahap 4. Jawab tiap pertanyaan dengan merujuk tahap, instansi, dan nomor peraturan yang relevan.</p>
         <label for="q1" class="q"><span class="qn">1</span><span>Tahap 4 menjadi tempat bertemu Kemenhub, Kemendag, dan BUMN Ekspor. Siapa yang menerbitkan dokumen angkutan multimoda bila DSI memegang kontrak ekspor?</span><textarea id="q1" name="q1" rows="5" required></textarea></label>
         <label for="q2" class="q"><span class="qn">2</span><span>Freight forwarder dengan KBLI 52311 mengatur truk, gudang, dan kapal sekaligus. Apakah kegiatan ini sudah masuk ranah KBLI 52291 angkutan multimoda?</span><textarea id="q2" name="q2" rows="5" required></textarea></label>
@@ -191,6 +204,18 @@ table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
         <div class="actions"><button type="submit" id="kirim" class="btn">Kirim jawaban</button><span id="f-msg" class="msg" role="status"></span></div>
       </fieldset>
     </form>
+    <dialog id="konfirmasi" aria-labelledby="k-judul">
+      <form method="dialog" class="k-box">
+        <h3 id="k-judul">Periksa jawaban Anda</h3>
+        <p id="k-lead" class="k-lead"></p>
+        <dl id="k-ident" class="k-ident"></dl>
+        <ul id="k-list" class="k-list"></ul>
+        <div class="k-actions">
+          <button type="button" class="btn ghost" id="k-batal">Periksa lagi</button>
+          <button type="button" class="btn" id="k-kirim">Ya, kirim jawaban</button>
+        </div>
+      </form>
+    </dialog>
   </section>
 
   <section class="sec">
@@ -352,7 +377,7 @@ let saving=false, draftTimer=null;
 if(!/^https:\/\/script\.google\.com\//.test(SCRIPT_URL)) fStatus.textContent='Formulir belum tersambung ke Google Sheet. Dosen perlu mengisi SCRIPT_URL di index.html.';
 
 function identOk(){
-  return /^[0-9]{1,3}$/.test($('i-absen').value.trim()) && $('i-nama').value.trim().length>=3 && $('i-notar').value.trim().length>=3 && $('i-kelas').value.trim().length>=2;
+  return /^[0-9]{1,3}$/.test($('i-absen').value.trim()) && $('i-nama').value.trim().length>=3 && /^[0-9]{3,20}$/.test($('i-notar').value.trim()) && $('i-kelas').value.trim().length>=2;
 }
 function syncLock(){ const lock=!identOk(); qs.disabled=lock; $('pgs').disabled=lock; }
 function readForm(){ const o={}; IDF.forEach(id=>o[KEYS[id]]=$(id).value.trim()); QF.forEach(id=>o[id]=$(id).value.trim()); o.pg=PG.map((_,i)=>{ const c=form.querySelector(`input[name="pg${i+1}"]:checked`); return c?c.value:''; }); return o; }
@@ -363,24 +388,59 @@ try{ const d=JSON.parse(sessionStorage.getItem(DRAFT)||'null'); if(d){ IDF.forEa
 syncLock();
 const fmtTime=s=>{ try{ return new Date(s).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return s||'';} };
 
-form.addEventListener('submit',async e=>{
+function periksa(){
+  const v=readForm(), kurang=[];
+  const marks=[];
+  if(!$('i-absen').value) { kurang.push('Nomor Absen belum dipilih'); marks.push($('i-absen')); }
+  if(v.nama.length<3) { kurang.push('Nama Lengkap belum diisi'); marks.push($('i-nama')); }
+  if(!/^[0-9]{3,20}$/.test(v.notar)) { kurang.push('Notar belum diisi atau berisi selain angka'); marks.push($('i-notar')); }
+  if(!$('i-kelas').value) { kurang.push('Kelas belum dipilih'); marks.push($('i-kelas')); }
+  const pgKosong=v.pg.map((x,i)=>x?-1:i).filter(i=>i>=0);
+  if(pgKosong.length) kurang.push('Pilihan ganda nomor '+pgKosong.map(i=>i+1).join(', ')+' belum dijawab');
+  const esai=QF.map((id,i)=>({id,i,ok:v[id].length>=10}));
+  esai.filter(e=>!e.ok).forEach(e=>{ kurang.push('Pertanyaan diskusi nomor '+(e.i+1)+' belum dijawab (minimal 10 karakter)'); marks.push($(e.id)); });
+  return {v,kurang,marks,pgKosong,esai};
+}
+const dlg=$('konfirmasi');
+let fokusSetelah=null;
+function bukaDialog(r){
+  const lengkap=!r.kurang.length;
+  $('k-judul').textContent=lengkap?'Kirim jawaban sekarang?':'Jawaban belum lengkap';
+  $('k-lead').className='k-lead'+(lengkap?'':' err');
+  $('k-lead').textContent=lengkap?'Pastikan identitas dan semua jawaban sudah benar. Untuk memperbaiki setelah terkirim, kirim ulang dengan Notar yang sama.':'Lengkapi bagian berikut sebelum mengirim.';
+  const idn=[['Nomor Absen',r.v.absen],['Nama Lengkap',r.v.nama],['Notar',r.v.notar],['Kelas',r.v.kelas]];
+  $('k-ident').innerHTML=idn.map(([k,x])=>`<dt>${k}</dt><dd>${x?esc(x):'<span style="color:var(--dag)">belum diisi</span>'}</dd>`).join('');
+  const pgIsi=10-r.pgKosong.length, esIsi=r.esai.filter(e=>e.ok).length;
+  const items=lengkap?[[true,'Pilihan ganda terjawab '+pgIsi+' dari 10'],[true,'Pertanyaan diskusi terjawab '+esIsi+' dari 3']]:r.kurang.map(t=>[false,t]);
+  $('k-list').innerHTML=items.map(([ok,t])=>`<li class="${ok?'ok':'no'}">${esc(t)}</li>`).join('');
+  $('k-kirim').hidden=!lengkap;
+  $('k-batal').textContent=lengkap?'Periksa lagi':'Lengkapi jawaban';
+  fokusSetelah=lengkap?null:(r.marks[0]||(r.pgKosong.length?document.querySelectorAll('.pg')[r.pgKosong[0]]:null));
+  if(typeof dlg.showModal==='function') dlg.showModal();
+  else if(lengkap){ if(window.confirm('Kirim jawaban sekarang?')) kirim(); }
+  else { fMsg.className='msg err'; fMsg.textContent=r.kurang.join('. ')+'.'; tutupDialog(); }
+}
+function tutupDialog(){
+  if(dlg.open) dlg.close();
+  if(fokusSetelah){ const el=fokusSetelah; el.scrollIntoView({behavior:'smooth',block:'center'}); if(el.focus) setTimeout(()=>el.focus({preventScroll:true}),300); }
+}
+$('k-batal').addEventListener('click',tutupDialog);
+dlg.addEventListener('cancel',e=>{ e.preventDefault(); tutupDialog(); });
+$('k-kirim').addEventListener('click',()=>{ if(dlg.open) dlg.close(); kirim(); });
+
+form.addEventListener('submit',e=>{
   e.preventDefault();
   if(saving) return;
-  let bad=null;
-  if(!identOk()){
-    IDF.forEach(id=>{ if(!$(id).value.trim()) $(id).setAttribute('aria-invalid','true'); });
-    if(!/^[0-9]{1,3}$/.test($('i-absen').value.trim())) $('i-absen').setAttribute('aria-invalid','true');
-    bad='Lengkapi identitas. Pilih Nomor Absen dan Kelas dari daftar.';
-  } else {
-    const kosong=readForm().pg.map((v,i)=>v?-1:i).filter(i=>i>=0);
-    document.querySelectorAll('.pg').forEach((el,i)=>el.dataset.bad=String(kosong.includes(i)));
-    if(kosong.length){ fMsg.className='msg err'; fMsg.textContent='Soal pilihan ganda nomor '+kosong.map(i=>i+1).join(', ')+' belum dijawab.'; document.querySelectorAll('.pg')[kosong[0]].scrollIntoView({behavior:'smooth',block:'center'}); return; }
-    const empty=QF.filter(id=>$(id).value.trim().length<10);
-    empty.forEach(id=>$(id).setAttribute('aria-invalid','true'));
-    if(empty.length) bad='Jawab semua pertanyaan. Tiap jawaban minimal 10 karakter.';
-  }
-  if(bad){ fMsg.className='msg err'; fMsg.textContent=bad; return; }
-  if(!/^https:\/\/script\.google\.com\//.test(SCRIPT_URL)){ fMsg.className='msg err'; fMsg.textContent='Formulir belum tersambung. Hubungi dosen.'; return; }
+  [...IDF,...QF].forEach(id=>$(id).removeAttribute('aria-invalid'));
+  const r=periksa();
+  r.marks.forEach(el=>el.setAttribute('aria-invalid','true'));
+  document.querySelectorAll('.pg').forEach((el,i)=>el.dataset.bad=String(r.pgKosong.includes(i)));
+  fMsg.className='msg'; fMsg.textContent='';
+  bukaDialog(r);
+});
+
+async function kirim(){
+  if(saving) return;
   saving=true; $('kirim').disabled=true; fMsg.className='msg'; fMsg.textContent='Mengirim…';
   const body=Object.assign(readForm(),{website:$('i-web').value});
   try{
@@ -398,7 +458,7 @@ form.addEventListener('submit',async e=>{
     fMsg.className='msg err';
     fMsg.textContent=(err&&err.message&&err.message!=='Failed to fetch'&&err.message!=='Gagal')?err.message:'Jawaban gagal terkirim. Periksa koneksi lalu kirim lagi. Isian Anda tetap tersimpan selama tab ini terbuka.';
   }finally{ saving=false; $('kirim').disabled=false; }
-});
+}
 
 document.getElementById('sources').innerHTML=SOURCES.map(([t,u])=>`<li><a href="${u}" target="_blank" rel="noopener">${esc(t)}</a></li>`).join('');
 </script>
