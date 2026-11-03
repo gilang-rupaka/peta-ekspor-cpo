@@ -170,7 +170,7 @@ table.rk td.empty{text-align:center;color:var(--muted);padding:18px}
         <legend>Identitas taruna</legend>
         <div class="grid4">
           <label for="i-absen">Nomor Absen<select id="i-absen" name="absen" required><option value="">Pilih</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option></select></label>
-          <label for="i-nama" class="wide">Nama Lengkap<input id="i-nama" name="nama" maxlength="80" required autocomplete="name"></label>
+          <label for="i-nama" class="wide">Nama Lengkap<input id="i-nama" name="nama" maxlength="80" required autocomplete="off"></label>
           <label for="i-notar">Notar<input id="i-notar" name="notar" inputmode="numeric" maxlength="20" required autocomplete="off"></label>
           <label for="i-kelas">Kelas<select id="i-kelas" name="kelas" required><option value="">Pilih kelas</option><option value="MLog 2A">MLog 2A</option><option value="MLog 2B">MLog 2B</option><option value="MLog 2C">MLog 2C</option><option value="MLog 2D">MLog 2D</option></select></label>
         </div>
@@ -356,9 +356,10 @@ function identOk(){
 }
 function syncLock(){ const lock=!identOk(); qs.disabled=lock; $('pgs').disabled=lock; }
 function readForm(){ const o={}; IDF.forEach(id=>o[KEYS[id]]=$(id).value.trim()); QF.forEach(id=>o[id]=$(id).value.trim()); o.pg=PG.map((_,i)=>{ const c=form.querySelector(`input[name="pg${i+1}"]:checked`); return c?c.value:''; }); return o; }
-function saveDraft(){ clearTimeout(draftTimer); draftTimer=setTimeout(()=>{ try{ localStorage.setItem(DRAFT,JSON.stringify(readForm())); }catch(e){} },400); }
+function saveDraft(){ clearTimeout(draftTimer); draftTimer=setTimeout(()=>{ try{ sessionStorage.setItem(DRAFT,JSON.stringify(readForm())); }catch(e){} },400); }
 [...IDF,...QF].forEach(id=>['input','change'].forEach(ev=>$(id).addEventListener(ev,()=>{ $(id).removeAttribute('aria-invalid'); syncLock(); saveDraft(); })));
-try{ const d=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(d){ IDF.forEach(id=>{ if(typeof d[KEYS[id]]==='string') $(id).value=d[KEYS[id]]; }); QF.forEach(id=>{ if(typeof d[id]==='string') $(id).value=d[id]; }); if(Array.isArray(d.pg)) d.pg.forEach((v,i)=>{ const r=form.querySelector(`input[name="pg${i+1}"][value="${v}"]`); if(r) r.checked=true; }); } }catch(e){}
+try{ localStorage.removeItem(DRAFT); }catch(e){}
+try{ const d=JSON.parse(sessionStorage.getItem(DRAFT)||'null'); if(d){ IDF.forEach(id=>{ if(typeof d[KEYS[id]]==='string') $(id).value=d[KEYS[id]]; }); QF.forEach(id=>{ if(typeof d[id]==='string') $(id).value=d[id]; }); if(Array.isArray(d.pg)) d.pg.forEach((v,i)=>{ const r=form.querySelector(`input[name="pg${i+1}"][value="${v}"]`); if(r) r.checked=true; }); } }catch(e){}
 syncLock();
 const fmtTime=s=>{ try{ return new Date(s).toLocaleString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return s||'';} };
 
@@ -388,11 +389,14 @@ form.addEventListener('submit',async e=>{
     const out=await res.json();
     if(!out.ok) throw new Error(out.error||'Gagal');
     fMsg.className='msg ok';
-    fMsg.textContent=(out.diperbarui?'Jawaban diperbarui':'Jawaban terkirim')+' pada '+fmtTime(out.waktu)+'. Simpan tangkapan layar sebagai bukti.';
-    $('kirim').textContent='Kirim ulang jawaban';
+    fMsg.textContent=(out.diperbarui?'Jawaban diperbarui':'Jawaban terkirim')+' pada '+fmtTime(out.waktu)+'. Simpan tangkapan layar sebagai bukti. Isian sudah dihapus dari perangkat ini.';
+    clearTimeout(draftTimer);
+    try{ sessionStorage.removeItem(DRAFT); }catch(e){}
+    form.reset(); syncLock();
+    document.querySelectorAll('.pg').forEach(el=>el.dataset.bad='false');
   }catch(err){
     fMsg.className='msg err';
-    fMsg.textContent=(err&&err.message&&err.message!=='Failed to fetch'&&err.message!=='Gagal')?err.message:'Jawaban gagal terkirim. Periksa koneksi lalu kirim lagi. Isian Anda tetap tersimpan di perangkat ini.';
+    fMsg.textContent=(err&&err.message&&err.message!=='Failed to fetch'&&err.message!=='Gagal')?err.message:'Jawaban gagal terkirim. Periksa koneksi lalu kirim lagi. Isian Anda tetap tersimpan selama tab ini terbuka.';
   }finally{ saving=false; $('kirim').disabled=false; }
 });
 
